@@ -1,5 +1,5 @@
-import React, { forwardRef } from 'react';
-import { CartItemType } from '../types';
+import { forwardRef } from 'react';
+import type { CartItemType } from '../types';
 import CartItem from './CartItem';
 
 interface CartSidebarProps {

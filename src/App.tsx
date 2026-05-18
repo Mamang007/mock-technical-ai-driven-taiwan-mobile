@@ -5,7 +5,7 @@ import ProductGrid from './components/ProductGrid';
 import CartSidebar from './components/CartSidebar';
 import Loading from './components/Loading';
 import Toast from './components/Toast';
-import { Product, CartItemType } from './types';
+import type { Product, CartItemType } from './types';
 
 function App() {
   const [products, setProducts] = useState<Product[]>([]);
