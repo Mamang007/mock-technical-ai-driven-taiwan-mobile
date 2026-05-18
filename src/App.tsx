@@ -11,6 +11,7 @@ function App() {
   const [cart, setCart] = useState<CartItemType[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   // Load products on mount
   useEffect(() => {
@@ -85,14 +86,23 @@ function App() {
   const cartCount = cart.reduce((total, item) => total + item.quantity, 0);
   const totalPrice = cart.reduce((total, item) => total + item.product.price * item.quantity, 0);
 
+  const filteredProducts = products.filter(product => 
+    product.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div className="container">
-      <Header cartCount={cartCount} onCartToggle={toggleCart} />
+      <Header 
+        cartCount={cartCount} 
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        onCartToggle={toggleCart} 
+      />
       
       {isLoading ? (
         <Loading />
       ) : (
-        <ProductGrid products={products} onAddToCart={addToCart} />
+        <ProductGrid products={filteredProducts} onAddToCart={addToCart} />
       )}
 
       <CartSidebar 
