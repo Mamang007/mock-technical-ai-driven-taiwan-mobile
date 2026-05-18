@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import './App.css';
 import Header from './components/Header';
 import ProductGrid from './components/ProductGrid';
@@ -15,10 +15,27 @@ function App() {
   const [searchTerm, setSearchTerm] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  
+  const cartSidebarRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadProducts();
   }, []);
+
+  // Click outside to close cart
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (isCartOpen && 
+          cartSidebarRef.current && 
+          !cartSidebarRef.current.contains(event.target as Node) &&
+          !(event.target as HTMLElement).closest('.cart-icon')) {
+        setIsCartOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isCartOpen]);
 
   const showToast = (message: string) => {
     setToastMessage(message);
@@ -28,11 +45,9 @@ function App() {
     setIsLoading(true);
     setError(null);
     
-    // Simulate API call
     setTimeout(() => {
       try {
-        // Randomly simulate error
-        if (Math.random() < 0.1) {
+        if (Math.random() < 0.05) {
           throw new Error('無法載入商品，請稍後再試。');
         }
 
@@ -95,7 +110,6 @@ function App() {
     }
 
     setIsLoading(true);
-    // Simulate checkout API call
     setTimeout(() => {
       setIsLoading(false);
       showToast('結帳成功！感謝您的購買。');
@@ -120,20 +134,27 @@ function App() {
         onCartToggle={toggleCart} 
       />
       
-      {isLoading && <Loading />}
-      
-      {error ? (
-        <div style={{ textAlign: 'center', padding: '50px' }}>
-          <p style={{ color: '#ff6b6b', marginBottom: '20px' }}>{error}</p>
-          <button className="add-to-cart-btn" style={{ width: 'auto' }} onClick={loadProducts}>
-            重試
-          </button>
-        </div>
-      ) : (
-        !isLoading && <ProductGrid products={filteredProducts} onAddToCart={addToCart} />
-      )}
+      <main aria-busy={isLoading}>
+        {isLoading && <Loading />}
+        
+        {error ? (
+          <section className="error-section" style={{ textAlign: 'center', padding: '50px' }}>
+            <p style={{ color: '#ff6b6b', marginBottom: '20px' }}>{error}</p>
+            <button className="add-to-cart-btn" style={{ width: 'auto' }} onClick={loadProducts}>
+              重試
+            </button>
+          </section>
+        ) : (
+          !isLoading && (
+            <section aria-label="產品列表">
+              <ProductGrid products={filteredProducts} onAddToCart={addToCart} />
+            </section>
+          )
+        )}
+      </main>
 
       <CartSidebar 
+        ref={cartSidebarRef}
         isOpen={isCartOpen}
         cart={cart}
         totalPrice={totalPrice}
