@@ -4,6 +4,7 @@ import Header from './components/Header';
 import ProductGrid from './components/ProductGrid';
 import CartSidebar from './components/CartSidebar';
 import Loading from './components/Loading';
+import Toast from './components/Toast';
 import { Product, CartItemType } from './types';
 
 function App() {
@@ -12,29 +13,46 @@ function App() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Load products on mount
   useEffect(() => {
     loadProducts();
   }, []);
 
+  const showToast = (message: string) => {
+    setToastMessage(message);
+  };
+
   const loadProducts = () => {
     setIsLoading(true);
-    // Simulate API call delay
+    setError(null);
+    
+    // Simulate API call
     setTimeout(() => {
-      const mockProducts: Product[] = [
-        { id: 1, name: '無線藍牙耳機', price: 2999, image: 'earphones.jpg' },
-        { id: 2, name: '智慧手錶', price: 8999, image: 'smartwatch.jpg' },
-        { id: 3, name: '便攜式充電器', price: 1299, image: 'powerbank.jpg' },
-        { id: 4, name: '無線滑鼠', price: 899, image: 'mouse.jpg' },
-        { id: 5, name: '機械鍵盤', price: 3999, image: 'keyboard.jpg' },
-        { id: 6, name: '網路攝影機', price: 2199, image: 'webcam.jpg' },
-        { id: 7, name: 'USB隨身碟', price: 599, image: 'usb.jpg' },
-        { id: 8, name: '桌面擴音器', price: 1599, image: 'speaker.jpg' }
-      ];
-      setProducts(mockProducts);
-      setIsLoading(false);
-    }, 1500);
+      try {
+        // Randomly simulate error
+        if (Math.random() < 0.1) {
+          throw new Error('無法載入商品，請稍後再試。');
+        }
+
+        const mockProducts: Product[] = [
+          { id: 1, name: '無線藍牙耳機', price: 2999, image: 'earphones.jpg' },
+          { id: 2, name: '智慧手錶', price: 8999, image: 'smartwatch.jpg' },
+          { id: 3, name: '便攜式充電器', price: 1299, image: 'powerbank.jpg' },
+          { id: 4, name: '無線滑鼠', price: 899, image: 'mouse.jpg' },
+          { id: 5, name: '機械鍵盤', price: 3999, image: 'keyboard.jpg' },
+          { id: 6, name: '網路攝影機', price: 2199, image: 'webcam.jpg' },
+          { id: 7, name: 'USB隨身碟', price: 599, image: 'usb.jpg' },
+          { id: 8, name: '桌面擴音器', price: 1599, image: 'speaker.jpg' }
+        ];
+        setProducts(mockProducts);
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setIsLoading(false);
+      }
+    }, 1000);
   };
 
   const toggleCart = () => setIsCartOpen(!isCartOpen);
@@ -55,6 +73,7 @@ function App() {
         return [...currentCart, { product, quantity: 1 }];
       }
     });
+    showToast(`已將 ${product.name} 加入購物車`);
   };
 
   const updateQuantity = (productId: number, change: number) => {
@@ -71,16 +90,18 @@ function App() {
 
   const checkout = () => {
     if (cart.length === 0) {
-      alert('購物車是空的！');
+      showToast('購物車是空的！');
       return;
     }
 
+    setIsLoading(true);
     // Simulate checkout API call
     setTimeout(() => {
-      alert('結帳成功！感謝您的購買。');
+      setIsLoading(false);
+      showToast('結帳成功！感謝您的購買。');
       setCart([]);
       setIsCartOpen(false);
-    }, 2000);
+    }, 1500);
   };
 
   const cartCount = cart.reduce((total, item) => total + item.quantity, 0);
@@ -99,10 +120,17 @@ function App() {
         onCartToggle={toggleCart} 
       />
       
-      {isLoading ? (
-        <Loading />
+      {isLoading && <Loading />}
+      
+      {error ? (
+        <div style={{ textAlign: 'center', padding: '50px' }}>
+          <p style={{ color: '#ff6b6b', marginBottom: '20px' }}>{error}</p>
+          <button className="add-to-cart-btn" style={{ width: 'auto' }} onClick={loadProducts}>
+            重試
+          </button>
+        </div>
       ) : (
-        <ProductGrid products={filteredProducts} onAddToCart={addToCart} />
+        !isLoading && <ProductGrid products={filteredProducts} onAddToCart={addToCart} />
       )}
 
       <CartSidebar 
@@ -113,6 +141,10 @@ function App() {
         onUpdateQuantity={updateQuantity}
         onCheckout={checkout}
       />
+
+      {toastMessage && (
+        <Toast message={toastMessage} onClose={() => setToastMessage(null)} />
+      )}
     </div>
   );
 }
